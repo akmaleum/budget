@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly Budget, Deductions & OT/PH Planner</title>
+  <!-- Load Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="budget.css">
+
+</head>
+<body>
+  <div class="grid-layout">
+    <!-- Left Column: Deductions + Extra Allowances, OT & PH -->
+    <div class="left-stack">
+      <!-- Card 1: Statutory Deductions Calculator -->
+      <div class="card">
+        <div class="header">
+          <h2>Statutory Deductions</h2>
+          <div class="header-actions">
+            <button type="button" class="pill-btn" id="theme-toggle" aria-pressed="false">Dark Mode</button>
+            <button type="button" class="pill-btn reset-btn" id="reset-all-btn">Reset to 0</button>
+            <span class="badge">MY 2026 Rates</span>
+          </div>
+        </div>
+
+        <div class="input-box">
+          <label for="base-pay">Monthly Base Pay</label>
+          <div class="input-wrapper">
+            <span>RM</span>
+            <input type="number" id="base-pay" value="0" min="0" step="20" />
+          </div>
+        </div>
+
+        <label class="toggle-row">
+          <span>Include PERKESO Lindungan 24 Jam (0.75% employee share)</span>
+          <input type="checkbox" id="lindung24" checked />
+        </label>
+
+        <div class="breakdown-list">
+          <div class="breakdown-row">
+            <span>EPF / KWSP (11%, under 60)</span>
+            <strong id="epf-val" class="deduct-amt">- RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>SOCSO Invalidity (0.5%, cap RM6,000)</span>
+            <strong id="socso-val" class="deduct-amt">- RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>EIS / SIP (0.2%, cap RM6,000)</span>
+            <strong id="eis-val" class="deduct-amt">- RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Lindung 24 Jam (0.75%, cap RM6,000)</span>
+            <strong id="lindung-val" class="deduct-amt">- RM 0.00</strong>
+          </div>
+        </div>
+
+        <div class="net-banner">
+          <span>Estimated Net Pay</span>
+          <strong id="net-pay">RM 0.00</strong>
+        </div>
+      </div>
+
+      <!-- Card 2: Extra Allowances, OT & PH Rates -->
+      <div class="card">
+        <div class="header">
+          <h2>Allowances, OT & PH</h2>
+          <span class="badge">EA 1955</span>
+        </div>
+
+        <div class="two-col-inputs">
+          <div class="mini-box">
+            <label for="extra-allowance">Extra Allowance (RM)</label>
+            <input type="number" id="extra-allowance" value="0" min="0" step="25" />
+          </div>
+          <div class="mini-box">
+            <label for="normal-hours">Normal Shift Hrs / Day</label>
+            <input type="number" id="normal-hours" value="8" min="0" max="12" step="0.5" />
+          </div>
+        </div>
+
+        <label class="toggle-row">
+          <span>Apply EPF/SOCSO/EIS to extra allowance (e.g. shift/lang)</span>
+          <input type="checkbox" id="allowance-deductible" checked />
+        </label>
+
+        <div class="two-col-inputs">
+          <div class="mini-box">
+            <label for="ot-normal-hrs">Normal Day OT Hrs (1.5×)</label>
+            <input type="number" id="ot-normal-hrs" value="0" min="0" max="104" step="0.5" />
+          </div>
+          <div class="mini-box">
+            <label for="ot-rest-hrs">Rest Day OT Hrs (2.0×)</label>
+            <input type="number" id="ot-rest-hrs" value="0" min="0" max="104" step="0.5" />
+          </div>
+          <div class="mini-box">
+            <label for="ph-shifts">PH Normal Shifts (2.0× ORP)</label>
+            <input type="number" id="ph-shifts" value="0" min="0" max="10" step="1" />
+          </div>
+          <div class="mini-box">
+            <label for="ot-ph-hrs">PH Overtime Hrs (3.0×)</label>
+            <input type="number" id="ot-ph-hrs" value="0" min="0" max="104" step="0.5" />
+          </div>
+        </div>
+
+        <div class="breakdown-list">
+          <div class="breakdown-row">
+            <span>ORP (Daily) / HRP (Hourly)</span>
+            <strong id="orp-hrp-val">RM 0.00 / RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Extra Allowance</span>
+            <strong id="allowance-earn-val" class="earn-amt">+ RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Total OT & PH Pay</span>
+            <strong id="ot-ph-earn-val" class="earn-amt">+ RM 0.00</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Total Gross Pay</span>
+            <strong id="total-gross-val">RM 0.00</strong>
+          </div>
+        </div>
+
+        <p class="note">
+          ORP = Base ÷ 26; HRP = ORP ÷ normal daily hours. PH normal shift pay shows the extra 2.0× ORP premium on top of monthly pay.
+        </p>
+      </div>
+    </div>
+
+    <!-- Right Column: Budget Sliders -->
+    <div class="card">
+      <div class="header">
+        <h1>Monthly Budget</h1>
+        <span class="badge">KL Plan</span>
+      </div>
+
+      <div class="summary">
+        <div class="metric" id="surplus-card">
+          <small>Surplus</small>
+          <strong id="surplus">RM 0.00</strong>
+        </div>
+        <div class="metric">
+          <small>Expenses</small>
+          <strong id="total-expenses">RM 0.00</strong>
+        </div>
+        <div class="metric" id="buffer-card">
+          <small>Buffer</small>
+          <strong id="buffer-rate">0%</strong>
+        </div>
+      </div>
+
+      <p class="section-title">Adjust Living Costs</p>
+      <div id="sliders"></div>
+    </div>
+  </div>
+
+  <script>
+    const items = [
+      { id: "rent",      label: "Room Rent",            value: 0, min: 0, max: 1200, step: 50 },
+      { id: "utilities", label: "Utilities & Mobile",   value: 0, min: 0, max: 250,  step: 10 },
+      { id: "my50",      label: "My50 Transit Pass",    value: 0, min: 0, max: 150,  step: 10 },
+      //{ id: "grab",      label: "Extra Grab / Transit", value: 0, min: 0, max: 300,  step: 20 },
+      { id: "meals",     label: "Meals & Groceries",    value: 0, min: 0, max: 1000, step: 50 },
+      { id: "laundry",   label: "Laundry & Essentials", value: 0, min: 0, max: 250,  step: 10 }
+    ];
+
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    const resetAllBtn = document.getElementById("reset-all-btn");
+    const basePayInput = document.getElementById("base-pay");
+    const lindungCheckbox = document.getElementById("lindung24");
+    const extraAllowanceInput = document.getElementById("extra-allowance");
+    const normalHoursInput = document.getElementById("normal-hours");
+    const allowanceDeductibleCheckbox = document.getElementById("allowance-deductible");
+    const otNormalHrsInput = document.getElementById("ot-normal-hrs");
+    const otRestHrsInput = document.getElementById("ot-rest-hrs");
+    const phShiftsInput = document.getElementById("ph-shifts");
+    const otPhHrsInput = document.getElementById("ot-ph-hrs");
+
+    const epfEl = document.getElementById("epf-val");
+    const socsoEl = document.getElementById("socso-val");
+    const eisEl = document.getElementById("eis-val");
+    const lindungEl = document.getElementById("lindung-val");
+    const netPayEl = document.getElementById("net-pay");
+
+    const orpHrpEl = document.getElementById("orp-hrp-val");
+    const allowanceEarnEl = document.getElementById("allowance-earn-val");
+    const otPhEarnEl = document.getElementById("ot-ph-earn-val");
+    const totalGrossEl = document.getElementById("total-gross-val");
+
+    const slidersContainer = document.getElementById("sliders");
+    const surplusEl = document.getElementById("surplus");
+    const totalExpensesEl = document.getElementById("total-expenses");
+    const bufferRateEl = document.getElementById("buffer-rate");
+    const surplusCard = document.getElementById("surplus-card");
+    const bufferCard = document.getElementById("buffer-card");
+
+    let currentNetPay = 0;
+
+    function formatRM(amount) {
+      return `RM ${amount.toLocaleString("en-MY", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
+    // Statutory deductions on contributory wages up to RM6,000 ceiling
+    function calculateDeductions(contributoryWage, includeLindung) {
+      if (contributoryWage <= 0) {
+        return { epf: 0, socso: 0, eis: 0, lindung: 0, totalDeductions: 0 };
+      }
+
+      const epf = Math.round(contributoryWage * 0.11);
+
+      const perkesoWage = Math.min(contributoryWage, 6000);
+      const bandMidpoint = perkesoWage <= 1000
+        ? Math.max(perkesoWage - 50, 25)
+        : Math.ceil(perkesoWage / 100) * 100 - 50;
+
+      const socso = Number((bandMidpoint * 0.005).toFixed(2));
+      const eis = Number((bandMidpoint * 0.002).toFixed(2));
+      const lindung = includeLindung ? Number((bandMidpoint * 0.0075).toFixed(2)) : 0;
+
+      const totalDeductions = Number((epf + socso + eis + lindung).toFixed(2));
+      return { epf, socso, eis, lindung, totalDeductions };
+    }
+
+    function paintSliderTrack(slider) {
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const val = Number(slider.value);
+      const pct = max > min ? ((val - min) / (max - min)) * 100 : 0;
+      const isDark = document.body.classList.contains("dark");
+      const activeColor = isDark ? "#3b82f6" : "#2563eb";
+      const trackColor = isDark ? "#263248" : "#e2e8f0";
+      slider.style.background = `linear-gradient(to right, ${activeColor} ${pct}%, ${trackColor} ${pct}%)`;
+    }
+
+    function repaintAllSliders() {
+      slidersContainer.querySelectorAll('input[type="range"]').forEach(paintSliderTrack);
+    }
+
+    themeToggleBtn.addEventListener("click", () => {
+      const isDark = document.body.classList.toggle("dark");
+      themeToggleBtn.textContent = isDark ? "Light Mode" : "Dark Mode";
+      themeToggleBtn.setAttribute("aria-pressed", String(isDark));
+      repaintAllSliders();
+    });
+
+    items.forEach((item) => {
+      const group = document.createElement("div");
+      group.className = "slider-group";
+      group.innerHTML = `
+        <div class="slider-header">
+          <label for="${item.id}">${item.label}</label>
+          <strong id="${item.id}-val">RM ${item.value}</strong>
+        </div>
+        <input
+          type="range"
+          id="${item.id}"
+          min="${item.min}"
+          max="${item.max}"
+          step="${item.step}"
+          value="${item.value}"
+        />
+      `;
+      slidersContainer.appendChild(group);
+
+      const slider = group.querySelector("input");
+      paintSliderTrack(slider);
+
+      slider.addEventListener("input", (e) => {
+        item.value = Number(e.target.value);
+        document.getElementById(`${item.id}-val`).textContent = `RM ${item.value}`;
+        paintSliderTrack(slider);
+        updateBudget();
+      });
+    });
+
+    function resetAllValuesToZero() {
+      basePayInput.value = 0;
+      extraAllowanceInput.value = 0;
+      normalHoursInput.value = 0;
+      otNormalHrsInput.value = 0;
+      otRestHrsInput.value = 0;
+      phShiftsInput.value = 0;
+      otPhHrsInput.value = 0;
+
+      items.forEach((item) => {
+        item.value = 0;
+        const slider = document.getElementById(item.id);
+        const valLabel = document.getElementById(`${item.id}-val`);
+        if (slider && valLabel) {
+          slider.value = 0;
+          valLabel.textContent = "RM 0";
+          paintSliderTrack(slider);
+        }
+      });
+
+      updateAll();
+    }
+
+    resetAllBtn.addEventListener("click", resetAllValuesToZero);
+
+    function updateAll() {
+      const basePay = Math.max(Number(basePayInput.value) || 0, 0);
+      const extraAllowance = Math.max(Number(extraAllowanceInput.value) || 0, 0);
+      const normalHours = Math.max(Number(normalHoursInput.value) || 0, 0);
+      const includeLindung = lindungCheckbox.checked;
+      const allowanceDeductible = allowanceDeductibleCheckbox.checked;
+
+      const otNormalHrs = Math.max(Number(otNormalHrsInput.value) || 0, 0);
+      const otRestHrs = Math.max(Number(otRestHrsInput.value) || 0, 0);
+      const phShifts = Math.max(Number(phShiftsInput.value) || 0, 0);
+      const otPhHrs = Math.max(Number(otPhHrsInput.value) || 0, 0);
+
+      // ORP & HRP based on monthly base pay (safe when normalHours is 0)
+      const orp = basePay / 26;
+      const hrp = normalHours > 0 ? orp / normalHours : 0;
+
+      // OT & PH premiums
+      const normalOtPay = otNormalHrs * hrp * 1.5;
+      const restOtPay = otRestHrs * hrp * 2.0;
+      const phShiftPay = phShifts * orp * 2.0;
+      const phOtPay = otPhHrs * hrp * 3.0;
+      const totalOtPhPay = Number((normalOtPay + restOtPay + phShiftPay + phOtPay).toFixed(2));
+
+      const totalGross = Number((basePay + extraAllowance + totalOtPhPay).toFixed(2));
+      const contributoryWage = allowanceDeductible ? basePay + extraAllowance : basePay;
+      const d = calculateDeductions(contributoryWage, includeLindung);
+
+      const netPay = Number(Math.max(totalGross - d.totalDeductions, 0).toFixed(2));
+
+      orpHrpEl.textContent = `${formatRM(orp)} / ${formatRM(hrp)}`;
+      allowanceEarnEl.textContent = `+ ${formatRM(extraAllowance)}`;
+      otPhEarnEl.textContent = `+ ${formatRM(totalOtPhPay)}`;
+      totalGrossEl.textContent = formatRM(totalGross);
+
+      epfEl.textContent = `- ${formatRM(d.epf)}`;
+      socsoEl.textContent = `- ${formatRM(d.socso)}`;
+      eisEl.textContent = `- ${formatRM(d.eis)}`;
+      lindungEl.textContent = `- ${formatRM(d.lindung)}`;
+      netPayEl.textContent = formatRM(netPay);
+
+      currentNetPay = netPay;
+      updateBudget();
+    }
+
+    function updateBudget() {
+      const totalExpenses = items.reduce((sum, item) => sum + item.value, 0);
+      const surplus = Number((currentNetPay - totalExpenses).toFixed(2));
+      const bufferRate = currentNetPay > 0 ? ((surplus / currentNetPay) * 100).toFixed(1) : "0.0";
+
+      surplusEl.textContent = formatRM(surplus);
+      totalExpensesEl.textContent = formatRM(totalExpenses);
+      bufferRateEl.textContent = `${bufferRate}%`;
+
+      surplusCard.classList.remove("positive", "negative");
+      bufferCard.classList.remove("positive", "negative");
+
+      if (surplus < 0) {
+        surplusCard.classList.add("negative");
+        bufferCard.classList.add("negative");
+      } else if (Number(bufferRate) >= 20) {
+        surplusCard.classList.add("positive");
+        bufferCard.classList.add("positive");
+      }
+    }
+
+    [
+      basePayInput,
+      lindungCheckbox,
+      extraAllowanceInput,
+      normalHoursInput,
+      allowanceDeductibleCheckbox,
+      otNormalHrsInput,
+      otRestHrsInput,
+      phShiftsInput,
+      otPhHrsInput
+    ].forEach((el) => {
+      el.addEventListener("input", updateAll);
+      el.addEventListener("change", updateAll);
+    });
+
+    updateAll();
+  </script>
+</body>
+</html>
